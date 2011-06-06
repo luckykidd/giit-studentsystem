@@ -1,0 +1,483 @@
+/************************************************************************* 
+学 生 成 绩 管 理 系 统 
+本系统支持每个学员录入学号、姓名、以及三门课成绩,且计算总分、平均成绩 
+插入、删除、修改、排序、查询个人成绩 浏览所有学生成绩。 
+1、使用结构保存每个学员的信息。 
+2、通过函数实现各个功能模块。 
+3、使用对文件的写操作记录成绩文件.默认保存在程序所在的目录下 
+4、不管是用户怎样操作数据都会有文件记录,实现了实时记录数据,但是给用户 
+看到的文件是用户对数据操作好之后保存下来的数据. 
+/*************************************************************************/ 
+#include <stdio.h> //标准输入输出 
+#include <stdlib.h> //其它操作 
+#include <windows.h> //windows相关 
+#include <string.h> //字符串操作 
+#include <conio.h> //系统输入输出 
+#include <time.h> //时间相关操作 
+/**********************下面是对用到的全局常量声明*************************/ 
+#define NAME 10 //学生姓名长度 
+#define PASSWORD " " //系统登陆密码 
+int input=0; //全局变量标记当前录入学员个数 
+float ave,sum; //平均成绩和总分 
+FILE *fp; //声明一个文件指针 
+/**************************结构体定义************************************/ 
+struct student{ //学生成绩结构 
+char name[NAME]; //学生姓名 
+int num; //学生学号 
+float score1; //记录学生成绩1 
+float score2; //记录学生成绩2 
+float score3; //记录学生成绩3 
+float ave; //平均分 
+float sum; //总分 
+}*pp; //声明一个结构指针 
+/**********************下面是对用到的函数声明*****************************/ 
+void Password(); //密码验证函数 
+void Save(struct student stu[]); //保存信息函数 
+void InputStu(struct student stu[]); //录入信息函数 
+void DelStu(struct student stu[]); //删除信息函数 
+void ModifyStu(struct student stu[]); //修改信息函数 
+void FindStu(struct student stu[]); //查找信息函数 
+void InsertStu(struct student stu[]); //插入信息函数 
+void SortStu(struct student stu[]); //排 序 函 数 
+void ListStu(struct student stu[]); //显示学员成绩信息 
+//**************************程序主体************************************** 
+void main() //程序入口 
+{ 
+system("color 02"); //设置当前窗口的背景色和前景色 
+struct student stu[50]; //最大学员人数 
+struct student *p; //声明一个结构指针 
+p=stu; //指针指向结构变量stu 
+int in; //接收用户的选择 
+char ch; //用于判断是否继续 
+Password(); //调用密码验函数 
+do 
+{ 
+system("cls"); 
+printf("\n\n"); 
+printf("\t\t ╭————————————————————╮\n"); 
+printf("\t\t ｜ 学 生 个 人 成 绩 管 理                ｜\n"); 
+printf("\t\t ｜————————————————————｜\n"); 
+printf("\t\t ｜ 1. 录入学生个人成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n");
+printf("\t\t ｜ 2. 修改学生个人成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n");
+printf("\t\t ｜ 3. 查询学生个人成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n");
+printf("\t\t ｜ 4. 浏览所有学生成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n");
+printf("\t\t ｜ 5. 删 除 学 生 成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n"); 
+printf("\t\t ｜ 6. 插 入 学 生 成绩                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n");
+printf("\t\t ｜ 7. 学 员 成 绩 排序                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n"); 
+printf("\t\t ｜ 8. 学 员 成 绩 保存                    ｜\n"); 
+printf("\t\t ｜————————————————————｜\n"); 
+printf("\t\t ｜ 9. 退出成绩管理系统                    ｜\n"); 
+printf("\t\t ╰————————————————————╯\n"); 
+printf("\t\t 请您正确选择: "); 
+if(!(scanf("%d",&in)==1)) 
+{ 
+while((ch=getchar())!='\n') 
+putchar(ch); 
+printf(" 没有此选项,请正确选择!"); 
+getch(); 
+continue; 
+} 
+fflush(stdin); 
+switch(in) 
+{ 
+case 1: 
+InputStu(stu); //调用录入成绩函数 
+break; 
+case 2: 
+ModifyStu(stu); //调用修改成绩函数 
+break; 
+case 3: 
+FindStu(stu); //调用查询个人成绩函数 
+break; 
+case 4: 
+ListStu(stu); //调用浏览所有学生成绩函数 
+break; 
+case 5: 
+DelStu(stu); //调用删除学生成绩函数 
+break; 
+case 6: 
+InsertStu(stu); //插入学员成绩信息 
+break; 
+case 7: 
+SortStu(stu); //调用排序函数 
+break; 
+case 8: 
+Save(stu); //保存学员成绩函数 
+break; 
+case 9: //退出系统 
+return; 
+default: 
+printf("没有此选项，请正确选择!"); 
+getch(); 
+break; 
+} 
+}while(1); 
+} 
+
+void InputStu(struct student stu[]) //录入学员成绩函数原形 
+{ 
+pp=stu; //指针指向结构 
+system("cls"); //清屏 
+int i; 
+printf("请问你要输入几个学生的信息:"); 
+scanf("%d",&input); 
+if((fp=fopen("inputdata.sys","wb+"))==NULL) //当前目录下是否存在inputdata.sys文件 
+{ //"wb+":读写打开或建立一个二进制文件,允许读和写 
+printf("Cannot open file strike any key exit!"); 
+getch(); 
+exit(1); 
+} 
+fprintf(fp,"学号 姓名 计算机应用 Java \tC语言 \tA v e\tS u m\n"); 
+
+for(i=0;i<input;i++) 
+{ 
+printf("输入学生学号:"); //输入学号 
+fflush(stdin); 
+scanf("%d",&stu[i].num); 
+printf("输入学生姓名:"); //输入姓名 
+fflush(stdin); 
+gets(stu[i].name); 
+printf("输入学生3科成绩\n"); 
+printf("——————————————————————————————\n"); 
+printf("\n计算机应用: "); //第一科成绩 
+fflush(stdin); 
+scanf("%f",&stu[i].score1); 
+printf("\nJava 语言: "); //第二科成绩 
+fflush(stdin); 
+scanf("%f",&stu[i].score2); 
+printf("\nC 语言: "); //第三科成绩 
+fflush(stdin); 
+scanf("%f",&stu[i].score3); 
+printf("——————————————————————————————\n"); 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+//下面这句代码的意思是写文件操作,后面遇到这样的代码是一样的意思 
+fprintf(fp," %d %s \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+} 
+void ModifyStu(struct student stu[]) 
+{ 
+pp=stu; 
+int id,i=0; //id为接收用户输入的学号 
+if((fp=fopen("modifydata.sys","wb+"))==NULL) 
+{ 
+printf("Cannot open file strike any key exit!"); 
+getch(); 
+exit(1); 
+} 
+fprintf(fp,"学号 姓名 计算机应用 Java \tC语言 \tA v e\tS u m\n"); 
+printf("\n请输入你要修改的学生的学号:"); 
+scanf("%d",&id); 
+Sleep(500); 
+printf("\n\t查找相关数据."); 
+for(i=0;i<=15;i++) 
+{ 
+Sleep(250); 
+printf("."); 
+} 
+for(i=0;i<input;i++) 
+{ 
+if(stu[i].num==id) //如果找到了就执行下面语句 ,找不到直接回主界面 
+{ 
+printf("\n输入学生新学号:"); //输入学号 
+fflush(stdin); 
+scanf("%d",&stu[i].num); 
+printf("\n输入学生新姓名:"); //输入姓名 
+fflush(stdin); 
+gets(stu[i].name); 
+printf("输入学生3科新成绩\n"); 
+printf("——————————————————————————————\n"); 
+printf("\n计算机应用: "); 
+scanf("%f",&stu[i].score1); 
+fflush(stdin); 
+printf("\nJava 语言: "); 
+scanf("%f",&stu[i].score2); 
+fflush(stdin); 
+printf("\n C 语言: "); 
+scanf("%f",&stu[i].score3); 
+printf("——————————————————————————————\n"); 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+fprintf(fp," %d %s \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+} 
+} 
+void FindStu(struct student stu[]) //查询个人成绩信息 
+{ 
+int i=0,id; //循环变量和用于接收学号 
+printf("请输入你要查询的学生学号:"); 
+scanf("%d",&id); 
+for(i=0;i<input;i++) 
+{ 
+if (stu[i].num==id) //如果找到你查询的数据就执行下面语句 
+{ //如果找不到。直接回程序主界面 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+printf("\n学号 姓名 计算机应用 java语言 C 语言 总 分 平均成绩\n"); 
+printf("\n%d %s %.1f\t %.1f\t %.1f\t %.1f\t %.1f\n\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].sum,stu[i].ave); 
+system("pause"); 
+} 
+} 
+} 
+void InsertStu(struct student stu[]) //插入学员成绩信息 
+{ 
+int flag=1; 
+pp=stu; 
+int i,id; 
+if((fp=fopen("insertdata.sys","wb+"))==NULL) 
+{ 
+printf("Cannot open file strike any key exit!"); 
+getch(); 
+exit(1); 
+} 
+fprintf(fp,"学号 姓名 计算机应用 Java \tC语言 \tA v e\tS u m\n"); 
+printf("输入你插入的学号:"); 
+scanf("%d",&id); 
+for(i=0;i<input;i++) 
+{ 
+if(stu[i].num==id) //判断学员的学号信息否存在? 
+{ 
+printf("学号信息已经存在!\n"); 
+flag=0; 
+getch(); 
+break; 
+} 
+} 
+if (flag!=0) 
+{ 
+input++; //插入一个,原来的总数增加1 
+printf("请确认输入要插入学生的学号:"); 
+scanf("%d",&stu[input-1].num); //如果不存在..那么就把插入的信息放到结构数组最后 
+printf("输入学生姓名:"); 
+fflush(stdin); 
+gets(stu[input-1].name); 
+printf("输入学生3科成绩\n"); 
+printf("——————————————————————————————\n"); 
+printf("\n计算机应用: "); 
+fflush(stdin); 
+scanf("%f",&stu[input-1].score1); 
+printf("\nJava 语言: "); 
+fflush(stdin); 
+scanf("%f",&stu[input-1].score2); 
+printf("\nC 语言: "); 
+fflush(stdin); 
+scanf("%f",&stu[input-1].score3); 
+printf("——————————————————————————————\n"); 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+fprintf(fp," %d %s \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f\n",stu[input-1].num,stu[input-1].name,stu[input-1].score1,stu[input-1].score2,stu[input-1].score3,stu[input-1].ave,stu[input-1].sum); 
+Sleep(500); 
+printf("插入数据成功!\n"); 
+getch(); 
+} 
+} 
+void ListStu(struct student stu[]) //浏览所有学生成绩 
+{ 
+int i=0; 
+for(i=0;i<input;i++) 
+{ 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+} 
+
+printf("\n学号 姓名 计算机应用 java语言 C 语言 平均成绩 总 分\n"); 
+for(i=0;i<input;i++) 
+{ 
+printf("\n %d %s %.1f\t %.1f\t %.1f\t %.1f\t %.1f",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave, stu[i].sum); 
+} 
+getch(); 
+} 
+void DelStu(struct student stu[]) //删除学员信息函数 
+{ 
+pp=stu; 
+struct student temp; 
+int delnum; 
+char ask; 
+int i,j; 
+if((fp=fopen("Deldata.sys","wb+"))==NULL) 
+{ 
+printf("Cannot open file strike any key exit!"); 
+getch(); 
+exit(1); 
+} 
+fprintf(fp,"学号 姓名 计算机应用 Java \tC语言 \tA v e\tS u m\n"); 
+system("cls"); 
+printf("\n\n\t请输入你要删除的学员的学号:"); 
+fflush(stdin); 
+scanf("%d",&delnum); 
+printf("\n\t是否确认删除学员%d的信息(y/n)",delnum); 
+fflush(stdin); 
+ask = getchar(); 
+if(ask != 'n') 
+{ 
+for(i=0;i<input;i++) 
+{ 
+if(stu[i].num == delnum) 
+break; 
+} 
+if(i > input) 
+printf("\n\t没有你要删除的学员!\n"); 
+else 
+{ 
+for(j=i;j<input;j++) 
+{ 
+temp = stu[j]; 
+stu[j] = stu[j+1]; 
+stu[j+1] = temp; 
+} 
+input--; //删掉一个学员信息后学员总数相应-1 
+system("cls"); 
+printf("\n\n删除成功!\n"); 
+} 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+fprintf(fp," %d %s \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+getch(); 
+} 
+} 
+void SortStu(struct student stu[]) //排序函数 
+{ 
+int i,j,chose; //i,j为循环变量 chose为接收用户输入的排序方式 
+struct student temp; 
+printf("排序前的数据为\n"); 
+printf("\n学号 姓名 计算机应用 java语言 C语言 平均成绩 总 分\n"); 
+for(i=0;i<input;i++) 
+{ 
+printf("\n %d %s %.1f\t %.1f\t %.1f\t %.1f\t %.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+printf("\n1.按学号排序\t2.按总分(高→低)排序\n"); 
+printf("\n请您正确选择:"); 
+fflush(stdin); 
+scanf("%d",&chose); 
+if(chose==1) 
+{ 
+for(i=0;i<input-1;i++) 
+{ 
+for(j=i+1;j<input;j++) 
+{ 
+if(stu[i].num>stu[j].num) 
+{ 
+temp=stu[i]; 
+stu[i]=stu[j]; 
+stu[j]=temp; 
+} 
+} 
+} 
+printf("\n学号 姓名 计算机应用 java语言 C语言 平均成绩 总 分\n"); 
+for(i=0;i<input;i++) 
+{ 
+printf("\n %d %s %.1f\t %.1f\t %.1f\t %.1f\t %.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+system("pause"); 
+} 
+else if(chose==2) 
+{ 
+for(i=0;i<input-1;i++) 
+{ 
+for(j=i+1;j<input;j++) 
+{ 
+if(stu[i].ave<stu[j].ave) 
+{ 
+temp=stu[i]; 
+stu[i]=stu[j]; 
+stu[j]=temp; 
+} 
+} 
+} 
+printf("\n学号 姓名 计算机应用 java语言 C语言 平均成绩 总 分\n"); 
+for(i=0;i<input;i++) 
+{ 
+printf("\n %d %s %.1f\t %.1f\t %.1f\t %.1f\t %.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+system("pause"); 
+} 
+} 
+void Password() //密码验证函数 
+{ 
+char *pass=NULL; //初始化指针 
+int i,count; 
+time_t start,end; //时间函数 
+pass=(char *)malloc(255*sizeof(char)); //分配内存 
+while(1) 
+{ 
+count=0; 
+printf("\n\n\n\n\n\t\t\t学 生 成 绩 管 理 系 统 \n"); 
+printf("\n\t\t UserName:HeBin \n"); 
+printf("\n\t\t PassWord:"); 
+while((count>=0)&&(pass[count++]=getch())!=13) //密码输入 
+{ 
+if(pass[0]=='\b') 
+{ 
+count=0; 
+continue; 
+} 
+else if(pass[count-1]=='\b') 
+{ 
+printf("%c%c%c",'\b','\0','\b'); 
+count-=2; 
+} 
+else 
+putchar('*'); 
+} 
+pass[--count]='\0'; 
+if(!strcmp(pass,PASSWORD)) //开始验证 
+{ 
+printf("\n\n\t\t\t\t\t\tLoading"); 
+for(i=0;i<=25;i++) 
+{ 
+Sleep(250); 
+printf("."); 
+} 
+system("cls"); 
+printf("\n\n\n\n\n\n\n\n\n\t\t\t"); 
+printf(" 欢 迎 登 陆 学 生 成 绩 管 理 系 统 !"); 
+start=time(NULL); 
+end=time(NULL); 
+while(end-start<2) //延时2秒执行以下程序 
+{ 
+end=time(NULL); 
+} 
+system("cls"); 
+free(pass); //释放储存密码的内存 
+return ; 
+} 
+free(pass); //释放密码错误的那块内存 
+pass=(char *)malloc(255*sizeof(char)); //重新分配储存密码内存 
+system("cls"); 
+printf("\a\n\n\n\n\n\n\n\n\t\t\t\t密 码 错 误 !"); 
+getch(); 
+system("cls"); 
+} 
+} 
+void Save(struct student stu[]) //成绩保存函数 
+{ 
+int i,j; 
+pp=stu; //指针指向结构 
+system("cls"); 
+printf("\n\n\n\n\t\t\tSaving"); 
+for(j=0;j<20;j++) 
+{ 
+Sleep(300); 
+printf("."); 
+} 
+if((fp=fopen("stu_list2.doc","wb+"))==NULL) 
+{ 
+printf("Cannot open file strike any key exit!"); 
+getch(); 
+exit(1); 
+} 
+fprintf(fp,"学号 \t姓名 计算机应用\tJava \tC语言 \tA v e\tS u m\n"); 
+for(i=0;i<input;i++) 
+{ 
+stu[i].sum=stu[i].score1+stu[i].score2+stu[i].score3; 
+stu[i].ave=stu[i].sum/3; 
+fprintf(fp," %d \t%s \t%.1f \t%.1f \t%.1f \t%.1f \t%.1f\n",stu[i].num,stu[i].name,stu[i].score1,stu[i].score2,stu[i].score3,stu[i].ave,stu[i].sum); 
+} 
+}
